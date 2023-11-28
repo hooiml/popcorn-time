@@ -1,6 +1,30 @@
+"use client";
 import Image from 'next/image'
+import { useEffect } from 'react'
 
 export default function Home() {
+
+  useEffect(()=> {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMWU5OWI0YjU4NWUyODUxZDY2OWFkYTZkZTQ4OGM4ZCIsInN1YiI6IjY1NjQ4ZTE0YjIzNGI5MDExYzg2ZWY5YSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XdRBZNhsWphXnFrF88OH_18NzeWHDu3Ly_J4DgTaHvA'
+      }
+    };
+    const getData = async () => {
+      const query = await fetch('https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1', options);
+      const response = await query.json();
+      console.log("response from api " + response);
+    }
+    getData();
+    // display lists of movies that are now playing in theaters with movie title, release data and cover image
+    // list should be paginated , 30 movies per page, most popular first
+    // able to filter lists by genres and ratings
+    // sort list by movie title, release date, popularity or ratings
+    // click on a movie should display modal window with more info about movie such as:synopsis, release date, casts, 
+    // page should be responsive and functionally decent on mobile and tablet screen sizes
+  },[]);
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">

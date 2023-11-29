@@ -1,8 +1,14 @@
 "use client";
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useEffect, useState, Fragment, useMemo } from 'react'
+import { Menu } from '@headlessui/react'
 
 export default function Home() {
+  var theaterMovieLists:any = [];
+  var theaterMoviesObject:any = {};
+  const [movies, setMovieInfo] = useState([]);
+  const [genresList, setGenre] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState([]);
 
   useEffect(()=> {
     const options = {
@@ -12,12 +18,21 @@ export default function Home() {
         Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMWU5OWI0YjU4NWUyODUxZDY2OWFkYTZkZTQ4OGM4ZCIsInN1YiI6IjY1NjQ4ZTE0YjIzNGI5MDExYzg2ZWY5YSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XdRBZNhsWphXnFrF88OH_18NzeWHDu3Ly_J4DgTaHvA'
       }
     };
-    const getData = async () => {
-      const query = await fetch('https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1', options);
+    const getMoviesOnTheaters = async () => {
+      const query = await fetch('https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1&sort_by=popularity.desc', options);
       const response = await query.json();
-      console.log("response from api " + response);
+      setMovieInfo(response.results);
     }
-    getData();
+
+    const getGenres = async () => {
+      const query = await fetch('https://api.themoviedb.org/3/genre/movie/list', options);
+      const response = await query.json();
+      setGenre(response.genres);
+      console.log(genresList);
+    }
+
+    getMoviesOnTheaters();
+    getGenres();
     // display lists of movies that are now playing in theaters with movie title, release data and cover image
     // list should be paginated , 30 movies per page, most popular first
     // able to filter lists by genres and ratings
@@ -27,6 +42,39 @@ export default function Home() {
   },[]);
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
+        <div className="dropdown dropdown-bottom">
+          <div tabIndex={0} role="button" className="btn m-1">Sort</div>
+          <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+            <li><a>Popularity Descending</a></li>
+            <li><a>Popularity Ascending</a></li>
+            <li><a>Rating Descending</a></li>
+            <li><a>Rating Ascending</a></li>
+            <li><a>Release Date Descending</a></li>
+            <li><a>Release Date Ascending</a></li>
+            <li><a>Title (A-Z)</a></li>
+            <li><a>Title (Z-A)</a></li>
+          </ul>
+        </div>
+
+        <div className="dropdown dropdown-bottom">
+          <div tabIndex={1} role="button" className="btn m-1">Filter</div>
+          <div className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+            {
+              genresList && genresList.length && genresList.map((genre:any) => {
+                return (
+                  <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">{genre.name}</span> 
+                    <input type="checkbox" checked={genre.checked} className="checkbox checkbox-primary" />
+                  </label>
+                </div>
+                )
+              }) 
+            }
+          </div>
+        </div>
+      </div>
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
         <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
           Get started by editing&nbsp;
@@ -64,7 +112,35 @@ export default function Home() {
       </div>
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
+
+        {
+          movies && movies.length && movies.map((movie:any) => {
+            return (
+                <a
+                href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+                target="_blank"
+                rel="noopener noreferrer"
+                >
+                <Image
+                  src={'https://www.themoviedb.org/t/p/w220_and_h330_face'+ movie.backdrop_path}
+                  alt="Vercel Logo"
+                  className="content-center"
+                  width={100}
+                  height={24}
+                  priority
+                />
+                <p className={`m-0 max-w-[30ch] text-sm opacity-90`}>
+                  {movie.title}
+                </p>
+                <p className={`m-0 max-w-[30ch] text-xs opacity-50`}>
+                  {movie.release_date}
+                </p>
+              </a>
+            )
+          }) 
+        }
+        {/* <a
           href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
           target="_blank"
@@ -130,7 +206,7 @@ export default function Home() {
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
             Instantly deploy your Next.js site to a shareable URL with Vercel.
           </p>
-        </a>
+        </a> */}
       </div>
     </main>
   )

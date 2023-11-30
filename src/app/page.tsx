@@ -2,35 +2,29 @@
 import Image from 'next/image'
 import { useEffect, useState, Fragment, useMemo } from 'react'
 import { Menu } from '@headlessui/react';
+import moment from 'moment';
 
 export default function Home() {
-  var theaterMovieLists:any = [];
-  var theaterMoviesObject:any = {};
   const [movies, setMovieInfo] = useState([]);
   const [genresList, setGenre] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState([]);
+  const options = {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+      Authorization: `${process.env.NEXT_PUBLIC_MOVIEDB_API_KEY}`
+    }
+  };
+  var fromDate = moment().subtract(37, 'days').format('YYYY-MM-DD');
+  var todayDate = moment().format('YYYY-MM-DD');
+  var loadingMovies: boolean = false;
 
   useEffect(()=> {
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `${process.env.NEXT_PUBLIC_MOVIEDB_API_KEY}`
-      }
-    };
-    const getMoviesOnTheaters = async () => {
-      const query = await fetch('https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1&sort_by=popularity.desc', options);
-      const response = await query.json();
-      setMovieInfo(response.results);
-    }
-
     const getGenres = async () => {
       const query = await fetch('https://api.themoviedb.org/3/genre/movie/list', options);
       const response = await query.json();
       setGenre(response.genres);
-      console.log(genresList);
     }
-
     getMoviesOnTheaters();
     getGenres();
     // display lists of movies that are now playing in theaters with movie title, release data and cover image
@@ -40,6 +34,23 @@ export default function Home() {
     // click on a movie should display modal window with more info about movie such as:synopsis, release date, casts, 
     // page should be responsive and functionally decent on mobile and tablet screen sizes
   },[]);
+
+  async function getMoviesOnTheaters(params?:any) {
+    loadingMovies = true;
+    // genre use this params with_genres (string) can be a comma (AND) or pipe (OR) separated query
+    const sortBy = params && params.sortBy ? params.sortBy : 'popularity.desc';
+    const page = params && params.page ? params.page : 1;
+    const apiUrl = `${`https://api.themoviedb.org/3/discover/movie?page=${page}&include_adult=false&include_video=false&language=en-US&page=1&sort_by=${sortBy}&with_release_type=2|3&release_date.gte=${fromDate}&release_date.lte=${todayDate}`}`
+    // const apiUrl = `https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=${page}&sort_by=${sortBy}`;
+    try {
+      const query = await fetch(apiUrl, options);
+      const response = await query.json();
+      setMovieInfo(response.results);
+      loadingMovies = false;
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+    }
+  }
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
 
@@ -80,17 +91,17 @@ export default function Home() {
       </div>
 
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <div className="dropdown dropdown-bottom">
+        <div className="dropdown dropdown-open dropdown-bottom">
           <div tabIndex={0} role="button" className="btn m-1">Sort</div>
           <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-            <li><a>Popularity Descending</a></li>
-            <li><a>Popularity Ascending</a></li>
-            <li><a>Rating Descending</a></li>
-            <li><a>Rating Ascending</a></li>
-            <li><a>Release Date Descending</a></li>
-            <li><a>Release Date Ascending</a></li>
-            <li><a>Title (A-Z)</a></li>
-            <li><a>Title (Z-A)</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'popularity.desc', page: 1 })}>Popularity Descending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'popularity.asc', page: 1 })}>Popularity Ascending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'vote_average.desc', page: 1 })}>Rating Descending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'vote_average.asc', page: 1 })}>Rating Ascending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'primary_release_date.desc', page: 1 })}>Release Date Descending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'primary_release_date.asc', page: 1 })}>Release Date Ascending</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'title.asc', page: 1 })}>Title (A-Z)</a></li>
+            <li><a onClick={() => getMoviesOnTheaters({ sortBy: 'title.desc', page: 1 })}>Title (Z-A)</a></li>
           </ul>
         </div>
 
@@ -102,12 +113,12 @@ export default function Home() {
                 return (
                   <div className="form-control">
                   <label className="label cursor-pointer">
-                    <span className="label-text">{genre.name}</span> 
+                    <span className="label-text">{genre.name} </span> 
                     <input type="checkbox" checked={genre.checked} className="checkbox checkbox-primary" />
                   </label>
                 </div>
                 )
-              }) 
+              })
             }
           </div>
         </div>
@@ -116,7 +127,7 @@ export default function Home() {
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
 
         {
-          movies && movies.length && movies.map((movie:any) => {
+          !loadingMovies && movies && movies.length && movies.length > 0 && movies.map((movie:any) => {
             return (
                 <a
                 href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
@@ -125,15 +136,15 @@ export default function Home() {
                 rel="noopener noreferrer"
                 >
                 <Image
-                  src={'https://www.themoviedb.org/t/p/w220_and_h330_face'+ movie.poster_path}
+                  src={movie.poster_path ? 'https://www.themoviedb.org/t/p/w220_and_h330_face'+ movie.poster_path : '/no_img_found.svg'}
                   alt="Vercel Logo"
-                  className="content-center"
+                  className="content-center no-img-found"
                   width={100}
-                  height={24}
-                  priority
+                  height={150}
                 />
                 <p className={`m-0 max-w-[30ch] text-sm opacity-90`}>
-                  {movie.title}
+                  {movie.title} 
+                   {/* ( Rating: {Math.round(movie.vote_average * 10) / 10} ) */}
                 </p>
                 <p className={`m-0 max-w-[30ch] text-xs opacity-50`}>
                   {movie.release_date}

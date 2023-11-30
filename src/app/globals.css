@@ -25,3 +25,9 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+.no-img-found {
+  width: 100px;
+  height: 160px;
+  background-color: white;
+}

@@ -1,7 +1,7 @@
 "use client";
 import Image from 'next/image'
 import { useEffect, useState, Fragment, useMemo } from 'react'
-import { Menu } from '@headlessui/react'
+import { Menu } from '@headlessui/react';
 
 export default function Home() {
   var theaterMovieLists:any = [];
@@ -15,7 +15,7 @@ export default function Home() {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMWU5OWI0YjU4NWUyODUxZDY2OWFkYTZkZTQ4OGM4ZCIsInN1YiI6IjY1NjQ4ZTE0YjIzNGI5MDExYzg2ZWY5YSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XdRBZNhsWphXnFrF88OH_18NzeWHDu3Ly_J4DgTaHvA'
+        Authorization: `${process.env.NEXT_PUBLIC_MOVIEDB_API_KEY}`
       }
     };
     const getMoviesOnTheaters = async () => {
